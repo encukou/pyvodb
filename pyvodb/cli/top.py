@@ -5,6 +5,7 @@ import shlex
 
 import click
 import blessings
+from sqlalchemy import create_engine
 
 from pyvodb.load import get_db
 
@@ -52,9 +53,10 @@ class Command(click.Command):
 @click.option('--json', 'format', flag_value='json', help="Export raw data as YAML")
 @click.option('--editor', envvar=['PYVO_EDITOR', 'VISUAL', 'EDITOR'],
               help="Your preferred editor (preferably console-based)")
+@click.option('--db', help="Database to use (SQLAlchemy connection string)", default=None)
 @click.option('-v/-q', '--verbose/--quiet', help="Spew lots of information")
 @click.pass_context
-def cli(ctx, data, verbose, color, format, editor):
+def cli(ctx, data, verbose, color, db, format, editor):
     """Query a meetup database.
     """
     ctx.obj['verbose'] = verbose
@@ -62,8 +64,12 @@ def cli(ctx, data, verbose, color, format, editor):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     ctx.obj['datadir'] = os.path.abspath(data)
+    if db:
+        engine = create_engine(db)
+    else:
+        engine = None
     if 'db' not in ctx.obj:
-        ctx.obj['db'] = get_db(data)
+        ctx.obj['db'] = get_db(data, engine)
     if color is None:
         ctx.obj['term'] = blessings.Terminal()
     elif color is True:

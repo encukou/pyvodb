@@ -32,6 +32,7 @@ def get_db(directory, engine=None):
     db = Session()
     if directory is not None:
         load_from_directory(db, directory)
+    db.commit()
     return db
 
 
